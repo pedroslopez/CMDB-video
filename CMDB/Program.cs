@@ -20,6 +20,7 @@ namespace CMDB
 
         static void PrintMenu()
         {
+            Console.Clear();
             Console.WriteLine("---- CONFIGURATION MANAGEMENT DATABASE ----");
             Console.WriteLine("1. Listar Configuration Items");
             Console.WriteLine("2. Agregar Configuration Item");
@@ -53,6 +54,13 @@ namespace CMDB
         static void ListItems()
         {
             List<ConfigurationItem> configItems = CMBusiness.GetConfigurationItems().ToList();
+            if (!configItems.Any())
+            {
+                Console.WriteLine("No existen elementos de configuración agregados. Presione cualquier letra para continuar.");
+                Console.ReadKey();
+                return;
+            }
+
             foreach (ConfigurationItem configItem in configItems)
             {
                 Console.WriteLine("---------------------");
@@ -83,6 +91,8 @@ namespace CMDB
             try
             {
                 CMBusiness.AddConfigurationItem(configItem);
+                Console.WriteLine("Elemento de configuración agregado");
+                Console.ReadKey();
             }
             catch (DbEntityValidationException ex)
             {
@@ -165,6 +175,8 @@ namespace CMDB
             CMBusiness.AddDependency(ci.Id, dependency.Id);
 
             Console.WriteLine("Dependencia agregada!");
+            Console.ReadKey();
+
         }
 
         static void PrintReportMenu()
@@ -183,7 +195,7 @@ namespace CMDB
                     ImpactChangeUpgradeReport();
                     break;
                 case "2":
-                    Console.WriteLine("REPORTE DE DEPRECAR");
+                    ImpactDeprecateCIReport();
                     break;
                 case "3":
                     return;
@@ -191,6 +203,57 @@ namespace CMDB
 
             PrintReportMenu();
 
+        }
+
+        private static void ImpactDeprecateCIReport()
+        {
+            Console.Clear();
+
+            List<ConfigurationItem> configItems = CMBusiness.GetConfigurationItems().ToList();
+
+            if (configItems.Count() == 0)
+            {
+                Console.WriteLine("ERROR: No existe ningun configuration item.");
+                return;
+            }
+
+            printCINames(configItems);
+
+            // No se como se escribe... XD
+            // Estas funciones ya la habiamos creado, en el proceso de Pair Programming
+
+            Console.WriteLine("\n\n\n\nSeleccione el item de configuracion que desee ver el reporte de deprecación: ");
+            ConfigurationItem deprecateItem = SelectItem(configItems);
+
+            Console.WriteLine("\n\n-------------------------------------------------------------------------------------");
+
+            if (!deprecateItem.Dependencies.Any())
+            {
+                Console.WriteLine($"Este elemento de configuración " +
+                    $"no afecta ningún otro elemento de configuración");
+                return;
+            }
+
+            Console.WriteLine("Los siguientes elementos de configuración se veran afectados");
+            PrintDependencyHerarchie(deprecateItem);
+            Console.ReadKey();
+            Console.Clear();
+        }
+
+        private static void PrintDependencyHerarchie(ConfigurationItem deprecateItem)
+        {
+            if (!deprecateItem.Dependencies.Any())
+                return;
+
+            Console.WriteLine("_________________________");
+            Console.WriteLine($"Depedientes de {deprecateItem.Name}");
+
+            foreach (var dependency in deprecateItem.Dependencies)
+            {
+                Console.WriteLine($"\n {dependency.ToString()}");
+
+                PrintDependencyHerarchie(dependency);
+            }
         }
 
         static void ImpactChangeUpgradeReport()
@@ -209,7 +272,7 @@ namespace CMDB
             ConfigurationItem updatedItem = SelectItem(configItems);
 
             string selected;
-            while(true)
+            while (true)
             {
                 Console.WriteLine("Seleccione el tipo de actualizacion:");
                 Console.WriteLine("1. Major");
@@ -221,23 +284,25 @@ namespace CMDB
 
                 if (selected == "4") return;
 
-                if(selected != "1" && selected != "2" && selected != "3")
+                if (selected != "1" && selected != "2" && selected != "3")
                 {
                     Console.WriteLine("Opcion invalida!");
-                } else
+                }
+                else
                 {
                     break;
                 }
             }
-      
-            if(selected == "2" || selected == "3")
+
+            if (selected == "2" || selected == "3")
             {
                 Console.WriteLine("La actualizacion se puede realizar sin conflictos!");
-            } else
+            }
+            else
             {
                 var affectedItems = CMBusiness.GetAffectedCIs(updatedItem);
                 Console.WriteLine("Al realizar la actualizacion, los siguientes items de configuracion se verian afectados:");
-                foreach(ConfigurationItem item in affectedItems)
+                foreach (ConfigurationItem item in affectedItems)
                 {
                     Console.WriteLine(item.ToString());
                     Console.WriteLine("------");
