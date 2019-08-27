@@ -180,6 +180,7 @@ namespace CMDB
             {
                 case "1":
                     Console.WriteLine("REPORTE DE ACTUALIZACION");
+                    ImpactChangeUpgradeReport();
                     break;
                 case "2":
                     Console.WriteLine("REPORTE DE DEPRECAR");
@@ -189,6 +190,60 @@ namespace CMDB
             }
 
             PrintReportMenu();
+
+        }
+
+        static void ImpactChangeUpgradeReport()
+        {
+            List<ConfigurationItem> configItems = CMBusiness.GetConfigurationItems().ToList();
+
+            if (configItems.Count() == 0)
+            {
+                Console.WriteLine("ERROR: No existe ningun configuration item.");
+                return;
+            }
+
+            printCINames(configItems);
+
+            Console.WriteLine("Seleccione el item de configuracion que desee actualizar: ");
+            ConfigurationItem updatedItem = SelectItem(configItems);
+
+            string selected;
+            while(true)
+            {
+                Console.WriteLine("Seleccione el tipo de actualizacion:");
+                Console.WriteLine("1. Major");
+                Console.WriteLine("2. Minor");
+                Console.WriteLine("3. Patch");
+                Console.WriteLine("4. Cancelar");
+
+                selected = Console.ReadLine();
+
+                if (selected == "4") return;
+
+                if(selected != "1" && selected != "2" && selected != "3")
+                {
+                    Console.WriteLine("Opcion invalida!");
+                } else
+                {
+                    break;
+                }
+            }
+      
+            if(selected == "2" || selected == "3")
+            {
+                Console.WriteLine("La actualizacion se puede realizar sin conflictos!");
+            } else
+            {
+                var affectedItems = CMBusiness.GetAffectedCIs(updatedItem);
+                Console.WriteLine("Al realizar la actualizacion, los siguientes items de configuracion se verian afectados:");
+                foreach(ConfigurationItem item in affectedItems)
+                {
+                    Console.WriteLine(item.ToString());
+                    Console.WriteLine("------");
+                }
+            }
+
 
         }
 

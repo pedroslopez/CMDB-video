@@ -59,6 +59,21 @@ namespace CMDB.Business
             return true;
         }
 
+        public List<ConfigurationItem> GetAffectedCIs(ConfigurationItem item)
+        {
+            List<ConfigurationItem> affectedCIs = new List<ConfigurationItem>();
+
+            foreach(ConfigurationItem ci in configurationDb.ConfigurationItems)
+            {
+                if(ci.Dependencies.Contains(item))
+                {
+                    affectedCIs.Add(ci);
+                }
+            }
+
+            return affectedCIs;
+        }
+
 
     }
 }
